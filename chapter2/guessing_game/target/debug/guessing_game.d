@@ -1,0 +1,1 @@
+/Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter2/guessing_game/target/debug/guessing_game: /Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter2/guessing_game/src/main.rs

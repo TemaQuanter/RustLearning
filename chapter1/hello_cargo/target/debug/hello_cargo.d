@@ -1,0 +1,1 @@
+/Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter1/hello_cargo/target/debug/hello_cargo: /Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter1/hello_cargo/src/main.rs

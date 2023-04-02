@@ -1,0 +1,1 @@
+/Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter3/variables/target/debug/variables: /Users/artemmikheev/Documents/Projects_(personal)/IT/Rust/RustLearning/chapter3/variables/src/main.rs
