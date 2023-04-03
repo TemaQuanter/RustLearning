@@ -1,3 +1,4 @@
+use core::num;
 /**
  * @file main.rs
  * @author Artem Mikheev (github: TemaQuanter)
@@ -6,7 +7,7 @@
  *        a number in the range from 1 to 100 in as many attempts, as
  *        user needs. On each step the program tells the player if
  *        the guess was too big or too small.
- * 
+ *
  *        Finally, when the user guesses the number, the program
  *        informs them about it and shows the number of attempts used.
  *
@@ -32,15 +33,9 @@ fn main() {
 
     let mut attempts: u32 = 0;
 
-
     // While the number is not guessed, continue the game.
 
     loop {
-        // Count the number of attempts to guess the number.
-
-        attempts += 1;
-
-
         // Clear the input string before reading the user's input in.
 
         users_guess.clear();
@@ -56,11 +51,17 @@ fn main() {
             .expect("Failed to read a line in");
 
         // Shadow user's input and parse it to an integer.
+        // If the parsing is unsuccessful, then ignore the rest of the
+        // code in the loop and start all over again.
 
-        let users_guess: u8 = users_guess
-            .trim()
-            .parse()
-            .expect("Failed to parse a string to an integer");
+        let users_guess: u8 = match users_guess.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        }; // end match
+
+        // Count the number of attempts to guess the number.
+
+        attempts += 1;
 
         // Check wheather the user's guess is too big or too small.
         // Inform the player about it.
