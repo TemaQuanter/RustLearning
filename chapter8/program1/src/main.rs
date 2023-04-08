@@ -55,15 +55,15 @@ fn main() {
     for (key, value) in &hm {
         // Declare variables.
 
-        let marks: usize = hm[key].len();
+        let marks: usize = value.len();
 
         // Introduce a student.
 
-        println!("{} got the following {} marks:", key, hm[key].len());
+        println!("{} got the following {} marks:", key, value.len());
 
         // Display the marks of a particular student.
 
-        for (ind, mark) in hm[key].iter().enumerate() {
+        for (ind, mark) in value.iter().enumerate() {
             // Check if it is the last mark to display.
             // Format the output accordingly.
 
