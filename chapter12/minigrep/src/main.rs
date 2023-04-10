@@ -11,8 +11,8 @@
 use std::env;
 use std::process;
 
-use minigrep::run;
-use minigrep::Config;
+use minigrep::config::run;
+use minigrep::config::Config;
 
 fn main() {
     // Declare variables.
