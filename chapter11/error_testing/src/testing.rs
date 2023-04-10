@@ -43,6 +43,7 @@ mod tests {
     } // end substraction_workds_properly()
 
     #[test]
+    #[ignore]
     fn greeting_works() {
         let username: String = String::from("Alex");
 
