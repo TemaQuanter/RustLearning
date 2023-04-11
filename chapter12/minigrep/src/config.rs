@@ -49,10 +49,59 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     content = fs::read_to_string(&config.file_name)?;
 
-    // Display the content of the file in
+    // Display the content found in
     // a formatted way.
 
-    println!("Content of \"{}\"\n\n{}", config.file_name, content);
+    for line in search(&content, &config.query) {
+        println!("{line}");
+    } // end for
 
     Ok(())
 } // end run
+
+// This function performs the search of the query slice in
+// the provided text.
+//
+fn search<'a>(content: &'a str, query: &str) -> Vec<&'a str> {
+    // Declare variables.
+
+    let mut result: Vec<&'a str> = Vec::new();
+    
+    // Iterate through each line of the text.
+
+    for line in content.lines() {
+        // Check if current line contains the query stirng.
+
+        if line.contains(query) {
+            // Current line contains the query string.
+
+            result.push(line);
+        } // end for
+    } // end for
+
+    result
+} // end search()
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // This test makes sure that the program finds the
+    // searched for slice in the text.
+    //
+    #[test]
+    fn searching_word() {
+        // Declare variables.
+
+        let text: &str = "\
+I love you
+And
+Have always
+Loved you!";
+
+        let query: &str = "ove";
+
+        assert_eq!(vec!["I love you", "Loved you!"], search(text, query));
+    } // end searching_word()
+} // end mod tests
