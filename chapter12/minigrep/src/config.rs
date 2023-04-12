@@ -16,30 +16,36 @@ use std::fs;
 pub struct Config {
     pub query: String,
     pub file_name: String,
-    pub case_sensetive: bool
+    pub case_sensetive: bool,
 } // end struct Config
 
 impl Config {
     // This function makes an attempt to build a config for
     // the program.
     //
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        // Check if there is a valid number of arguments passed
-        // to the program.
-        if args.len() != 3 {
-            // The number of elements is invalid.
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        // Skip the name of the program.
 
-            return Err("The number of arguments should be 2");
-        } // end if
+        args.next();
 
         // Declare varaibles.
+
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("The search for word is not specified"),
+        }; // end query
+
+        let file_name = match args.next() {
+            Some(arg) => arg,
+            None => return Err("The file name is not specified"),
+        }; // end file_name
 
         let case_sensetive: bool = std::env::var("CASE_SENSETIVE").is_ok();
 
         Ok(Config {
-            query: args[1].clone(),
-            file_name: args[2].clone(),
-            case_sensetive
+            query,
+            file_name,
+            case_sensetive,
         })
     } // end build()
 } // end impl Config
@@ -71,34 +77,32 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 fn search<'a>(content: &'a str, query: &str, case_sensetive: bool) -> Vec<&'a str> {
     // Declare variables.
 
-    let mut result: Vec<&'a str> = Vec::new();
-    let mut query: String = query.to_string();
+    // Check if it is a non-case-sensetive search.
+
+    let query: String = if case_sensetive {
+        query.to_string()
+    } else {
+        query.to_lowercase()
+    }; // end query
+
+    // Filter all the elements and get the vector of searched for values.
 
     // Check if it is a non-case-sensetive search.
 
-    if !case_sensetive {
-        query = query.to_lowercase();
+    if case_sensetive {
+        content
+            .lines()
+            .into_iter()
+            .filter(|line| line.contains(&query))
+            .collect()
+    } else {
+        content
+            .lines()
+            .into_iter()
+            .filter(|line| line.to_lowercase().contains(&query))
+            .collect()
     } // end if
-
-    let query: &str = query.as_str();
-    
-    // Iterate through each line of the text.
-
-    for line in content.lines() {
-
-        // Check if it is a non-case-sensetive search.
-        // Check if current line contains the query stirng.
-
-        if (!case_sensetive && line.to_lowercase().contains(query)) || (case_sensetive && line.contains(query)) {
-            // Current line contains the query string.
-
-            result.push(line);
-        } // end for
-    } // end for
-
-    result
 } // end search()
-
 
 #[cfg(test)]
 mod tests {
@@ -139,6 +143,9 @@ Loved you!";
 
         // Assert.
 
-        assert_eq!(vec!["I love you", "Loved you!"], search(content, query, false));
+        assert_eq!(
+            vec!["I love you", "Loved you!"],
+            search(content, query, false)
+        );
     } // end insensitive_search()
 } // end mod tests
