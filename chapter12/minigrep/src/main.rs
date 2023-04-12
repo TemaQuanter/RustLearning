@@ -20,7 +20,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let config: Config = Config::build(&args).unwrap_or_else(|err| {
-        println!("Problem with parsing arguments: {err}");
+        eprintln!("Problem with parsing arguments: {err}");
         process::exit(-1);
     });
 
@@ -34,7 +34,7 @@ fn main() {
     if let Err(e) = run(config) {
         // Error occured in the application.
 
-        println!("Application error: {e}");
+        eprintln!("Application error: {e}");
 
         process::exit(-1);
     } // end if let

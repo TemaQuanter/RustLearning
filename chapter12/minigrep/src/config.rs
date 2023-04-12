@@ -16,6 +16,7 @@ use std::fs;
 pub struct Config {
     pub query: String,
     pub file_name: String,
+    pub case_sensetive: bool
 } // end struct Config
 
 impl Config {
@@ -31,9 +32,14 @@ impl Config {
             return Err("The number of arguments should be 2");
         } // end if
 
+        // Declare varaibles.
+
+        let case_sensetive: bool = std::env::var("CASE_SENSETIVE").is_ok();
+
         Ok(Config {
             query: args[1].clone(),
             file_name: args[2].clone(),
+            case_sensetive
         })
     } // end build()
 } // end impl Config
@@ -52,7 +58,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Display the content found in
     // a formatted way.
 
-    for line in search(&content, &config.query) {
+    for line in search(&content, &config.query, config.case_sensetive) {
         println!("{line}");
     } // end for
 
@@ -62,17 +68,28 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 // This function performs the search of the query slice in
 // the provided text.
 //
-fn search<'a>(content: &'a str, query: &str) -> Vec<&'a str> {
+fn search<'a>(content: &'a str, query: &str, case_sensetive: bool) -> Vec<&'a str> {
     // Declare variables.
 
     let mut result: Vec<&'a str> = Vec::new();
+    let mut query: String = query.to_string();
+
+    // Check if it is a non-case-sensetive search.
+
+    if !case_sensetive {
+        query = query.to_lowercase();
+    } // end if
+
+    let query: &str = query.as_str();
     
     // Iterate through each line of the text.
 
     for line in content.lines() {
+
+        // Check if it is a non-case-sensetive search.
         // Check if current line contains the query stirng.
 
-        if line.contains(query) {
+        if (!case_sensetive && line.to_lowercase().contains(query)) || (case_sensetive && line.contains(query)) {
             // Current line contains the query string.
 
             result.push(line);
@@ -102,6 +119,26 @@ Loved you!";
 
         let query: &str = "ove";
 
-        assert_eq!(vec!["I love you", "Loved you!"], search(text, query));
+        // Assert.
+
+        assert_eq!(vec!["I love you", "Loved you!"], search(text, query, true));
     } // end searching_word()
+
+    // This test makes sure that the case insensitive
+    // search works.
+    //
+    #[test]
+    fn insensitive_search() {
+        let content: &str = "\
+I love you
+And
+Have always
+Loved you!";
+
+        let query: &str = "love";
+
+        // Assert.
+
+        assert_eq!(vec!["I love you", "Loved you!"], search(content, query, false));
+    } // end insensitive_search()
 } // end mod tests
