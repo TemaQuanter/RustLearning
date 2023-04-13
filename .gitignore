@@ -26,4 +26,6 @@ chapter11/integration_error_testing/target/
 chapter12/minigrep/target/
 chapter13/closures/target/
 chapter13/iterators/target/
+chapter14/adder/target/
+chapter14/hasher/target/
 
