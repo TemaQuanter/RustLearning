@@ -5,6 +5,7 @@ fn main() {
     prog1();
     prog2();
     prog3();
+    prog4();
 } // end main()
 
 fn prog1() {
@@ -42,4 +43,18 @@ fn assign(rf: &RefCell<Rc<String>>) {
     let st: Rc<String> = Rc::new(String::from("Hello, world!"));
 
     *rf.borrow_mut() = Rc::clone(&st);
+}
+
+fn prog4() {
+    let mut x: Rc<String> = Rc::new(String::new());
+
+    assign_2(&mut x);
+
+    println!("{}", x);
+}
+
+fn assign_2(rf: &mut Rc<String>) {
+    let st: Rc<String> = Rc::new(String::from("Hello, world!"));
+
+    *rf = Rc::clone(&st);
 }
