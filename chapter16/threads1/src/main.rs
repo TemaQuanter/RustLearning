@@ -1,12 +1,13 @@
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-use std::sync::mpsc;
 
 fn main() {
     prog1();
     prog2();
     prog3();
     prog4();
+    prog5();
 } // end main()
 
 fn prog1() {
@@ -53,7 +54,12 @@ fn prog4() {
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
-        let data: Vec<String> = vec!["Hi".to_string(), "from".to_string(), "a".to_string(), "thread".to_string()];
+        let data: Vec<String> = vec![
+            "Hi".to_string(),
+            "from".to_string(),
+            "a".to_string(),
+            "thread".to_string(),
+        ];
 
         for el in data {
             tx.send(el).expect("Failed to transfer data");
@@ -65,3 +71,34 @@ fn prog4() {
         println!("Got: {}", data);
     } // end for
 } // end prog4()
+
+fn prog5() {
+    let (tx, rx): (mpsc::Sender<String>, mpsc::Receiver<String>) = mpsc::channel();
+
+    let mut transmitters: Vec<mpsc::Sender<String>> = Vec::new();
+    let mut threads: Vec<thread::JoinHandle<()>> = Vec::new();
+
+    for _ in 0..10 {
+        transmitters.push(tx.clone());
+    } // end for
+
+    drop(tx);
+
+    for (i, tm) in transmitters.into_iter().enumerate() {
+        threads.push(thread::spawn(move || {
+            for _ in 0..10 {
+                tm.send(format!("Hi from transmitter number {}", i))
+                    .expect("Failed to send data");
+                thread::sleep(Duration::from_millis(50));
+            } // end for
+        }));
+    } // end for
+
+    for message in rx {
+        println!("{}", message);
+    } // end for
+
+    for th in threads.into_iter() {
+        th.join().expect("A thread failed");
+    } // end for
+} // end prog5()

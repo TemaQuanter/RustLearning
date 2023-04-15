@@ -32,4 +32,5 @@ chapter15/smart_pointers_1/target
 chapter15/smart_pointers_2/target
 chapter15/smart_pointers_3/target
 chapter16/threads1/target
+chapter16/mutex/target
 
