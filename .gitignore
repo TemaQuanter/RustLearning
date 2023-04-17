@@ -35,4 +35,6 @@ chapter16/threads1/target
 chapter16/mutex/target
 chapter17/mini_game/target
 chapter18/patterns/target
+chapter19/advanced_features/target
+chapter19/c_library/libadd.dylib
 
