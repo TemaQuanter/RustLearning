@@ -38,4 +38,7 @@ chapter18/patterns/target
 chapter19/advanced_features/target
 chapter19/c_library/libadd.dylib
 chapter19/advanced_traits/target
+chapter19/advanced_closures/target
+chapter19/macros/target
+chapter19/hello_macro/target
 
