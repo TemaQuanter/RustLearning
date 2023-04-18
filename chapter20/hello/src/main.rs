@@ -13,11 +13,13 @@ fn main() {
 
     let thread_pool: ThreadPool = ThreadPool::new(4);
 
-    for stream in listener.incoming() {
+    for stream in listener.incoming().take(2) {
         let stream: TcpStream = stream.expect("Failed to unwrap a stream");
 
         thread_pool.execute(|| handle_connection(stream));
     } // end for
+
+    println!("Shutting down...");
 } // end main()
 
 fn handle_connection(mut stream: TcpStream) {
