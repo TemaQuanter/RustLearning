@@ -2,6 +2,8 @@
 /// pictures and text over the protocol.
 ///
 use rand::{self, Rng};
+use serde::{Serialize, Deserialize};
+use serde_json;
 use std::{
     fs::{self, File},
     io::{Read, Write, BufReader, BufRead},
@@ -15,6 +17,7 @@ use std::{
 ///     1. File name of the picture
 ///     2. Content of the picture (bytes)
 /// 
+#[derive(Serialize, Deserialize)]
 struct Image {
     file_name: String,
     data: Vec<u8>
@@ -54,8 +57,6 @@ fn handle_stream(mut stream: TcpStream) {
         return;
     } // end if
 
-    println!("{response}");
-
     // Continue sending some data to the client, while they are alive.
     loop {
         // Get the random image and its name (name, image).
@@ -66,14 +67,19 @@ fn handle_stream(mut stream: TcpStream) {
             data: image_data
         }; // end image_data
 
+        // Convert an image data structure to JSON.
+        let json_img_data: String = serde_json::to_string(&img)
+            .expect("Failed to convert Image structure to JSON");
+
+        // Convert JSON to bytes.
+        let json_img_data_bytes: &[u8] = json_img_data.as_bytes();
+
         // Debug
         println!("Image name: {}", img.file_name);
 
         // Transfer the content to the client.
-        stream.write_all(&img.data[..])
+        stream.write_all(json_img_data_bytes)
             .expect("Failed to transfer the data to a client");
-
-        break;
 
         // Sleep for some time before handling the next request.
         thread::sleep(Duration::from_millis(1500));
