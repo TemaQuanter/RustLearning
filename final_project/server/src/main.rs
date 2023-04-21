@@ -2,25 +2,26 @@
 /// pictures and text over the protocol.
 ///
 use rand::{self, Rng};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{
     fs::{self, File},
-    io::{Read, Write, BufReader, BufRead},
+    io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
-    thread,
+    thread::{self, JoinHandle},
     time::Duration,
+    sync::{Arc, Mutex}
 };
 
 /// This struct represents an image file.
 /// It stores
 ///     1. File name of the picture
 ///     2. Content of the picture (bytes)
-/// 
+///
 #[derive(Serialize, Deserialize)]
 struct Image {
     file_name: String,
-    data: Vec<u8>
+    data: Vec<u8>,
 } // end struct Image
 
 fn main() {
@@ -30,65 +31,98 @@ fn main() {
 
     // Accept connections and process them serially.
     for stream in listener.incoming() {
-        handle_stream(stream.expect("Failed to get the data from an incoming connection"));
+        handle_stream(Arc::new(Mutex::new(stream.expect("Failed to get the data from an incoming connection"))));
     } // end for
 } // end main()
 
 /// This function handles a connection.
-/// 
-fn handle_stream(mut stream: TcpStream) {
+///
+fn handle_stream(mut stream: Arc<Mutex<TcpStream>>) {
     // Get the request type from a client.
-    let buf_reader: BufReader<&mut TcpStream> = BufReader::new(&mut stream);
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
+    // let buf_reader: BufReader<&mut TcpStream> = BufReader::new(&mut stream);
+    // let request_line = buf_reader.lines().next().unwrap().unwrap();
 
-    // Create a response for the client.
-    let response: &str = match &request_line[..] {
-        "GET / HTTP/1.1" => "HTTP/1.1 200 OK\r\n\r\n",
-        _ => "HTTP/1.1 404 NOT FOUND\r\n\r\n"
-    }; // end match
+    // Create a thread that sends key words to a client.
 
-    // Respond to the client.
-    stream.write_all(response.as_bytes())
-        .expect("Failed to establish a connection with a client");
+    // Create a reference to the stream.
 
-    // Check if the client tried to access a non-existing page,
-    // finish session.
-    if response == "HTTP/1.1 404 NOT FOUND" {
-        return;
-    } // end if
+    let moved_stream: Arc<Mutex<TcpStream>> = Arc::clone(&stream);
+
+    let thr: JoinHandle<()> = thread::spawn(move || {
+        // A special variable that determines it the transfer of
+        // data was successful.
+        let mut success: bool = false;
+
+        loop {
+            // Try to get the access to the stream to transfer data.
+            if let Ok(mut local_stream) = moved_stream.lock() {
+                // Sent a key word.
+                local_stream.write_all("Key word\r\n".as_bytes())
+                    .expect("Failed to send the key word");
+
+                // Debug
+                println!("Key word sent!");
+
+                // Mark the data transfer as successful.
+                success = true;
+            } // end if let
+
+            // Sleep for some time in case the data transfer was successful.
+            if success {
+                success = false;
+                thread::sleep(Duration::from_secs(1));
+            } // end if
+        } // end loop
+    });
+
+    // A special variable that determines if the transfer of data
+    // was successful.
+    let mut success: bool = false;
 
     // Continue sending some data to the client, while they are alive.
     loop {
-        // Get the random image and its name (name, image).
-        let (image_name, image_data) : (String, Vec<u8>) = get_random_image();
+        // Try to get an access to the stream to transfer data.
+        if let Ok(mut local_stream) = stream.lock() {
+            // Get the random image and its name (name, image).
+            let (image_name, image_data): (String, Vec<u8>) = get_random_image();
 
-        let img: Image = Image {
-            file_name: image_name,
-            data: image_data
-        }; // end image_data
+            let img: Image = Image {
+                file_name: image_name,
+                data: image_data,
+            }; // end image_data
 
-        // Convert an image data structure to JSON.
-        let json_img_data: String = serde_json::to_string(&img)
-            .expect("Failed to convert Image structure to JSON");
+            // Convert an image data structure to JSON.
+            let json_img_data: String =
+                serde_json::to_string(&img).expect("Failed to convert Image structure to JSON");
 
-        // Convert JSON to bytes.
-        let json_img_data_bytes: &[u8] = json_img_data.as_bytes();
+            // Format a proper response to the client.
+            let response: String = format!("{}\r\n", json_img_data);
 
-        // Debug
-        println!("Image name: {}", img.file_name);
+            // Debug
+            println!("Image name: {}", img.file_name);
 
-        // Transfer the content to the client.
-        stream.write_all(json_img_data_bytes)
-            .expect("Failed to transfer the data to a client");
+            // Transfer the content to the client.
+            local_stream
+                .write_all(response.as_bytes())
+                .expect("Failed to transfer the data to a client");
 
-        // Sleep for some time before handling the next request.
-        thread::sleep(Duration::from_millis(1500));
+            // Mark the data transfer as successful.
+            success = true;
+        } // end if let
+
+        // If the data transfer was successful, then sleep
+        // for some time.
+        if success {
+            success = false;
+            // Sleep for some time before handling the next request.
+            thread::sleep(Duration::from_millis(1500));
+        } // end if
     } // end loop
 } // end handle_stream()
 
 /// This function gets a random picture from the database and
 /// returns it.
-/// 
+///
 fn get_random_image() -> (String, Vec<u8>) {
     // The path to the directory with images.
     const PATH_IMAGES: &str = "images/";
