@@ -8,9 +8,9 @@ use std::{
     fs::{self, File},
     io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
+    sync::{Arc, Mutex},
     thread::{self, JoinHandle},
     time::Duration,
-    sync::{Arc, Mutex}
 };
 
 /// This struct represents an image file.
@@ -31,7 +31,9 @@ fn main() {
 
     // Accept connections and process them serially.
     for stream in listener.incoming() {
-        handle_stream(Arc::new(Mutex::new(stream.expect("Failed to get the data from an incoming connection"))));
+        handle_stream(Arc::new(Mutex::new(
+            stream.expect("Failed to get the data from an incoming connection"),
+        )));
     } // end for
 } // end main()
 
@@ -45,7 +47,6 @@ fn handle_stream(mut stream: Arc<Mutex<TcpStream>>) {
     // Create a thread that sends key words to a client.
 
     // Create a reference to the stream.
-
     let moved_stream: Arc<Mutex<TcpStream>> = Arc::clone(&stream);
 
     let thr: JoinHandle<()> = thread::spawn(move || {
@@ -56,12 +57,16 @@ fn handle_stream(mut stream: Arc<Mutex<TcpStream>>) {
         loop {
             // Try to get the access to the stream to transfer data.
             if let Ok(mut local_stream) = moved_stream.lock() {
+                // Get a random key word from the file with key words.
+                let key_word: String = get_random_key_word();
+
                 // Sent a key word.
-                local_stream.write_all("Key word\r\n".as_bytes())
+                local_stream
+                    .write_all(format!("{}\r\n", key_word).as_bytes())
                     .expect("Failed to send the key word");
 
                 // Debug
-                println!("Key word sent!");
+                println!("Key word \"{key_word}\" sent!");
 
                 // Mark the data transfer as successful.
                 success = true;
@@ -168,3 +173,26 @@ fn get_random_image() -> (String, Vec<u8>) {
     // Return the name of the file and the content itself.
     (image_names[rand_ind].clone(), content)
 } // end get_random_image()
+
+/// This function gets and returns a random word found in the list
+/// of key words.
+///
+fn get_random_key_word() -> String {
+    const PATH_KEY_WORDS: &str = "key_words.txt";
+
+    // Read the content of a file in a single string.
+    let key_words_string: String =
+        fs::read_to_string(PATH_KEY_WORDS).expect("Failed to read the content of a file");
+
+    // Split the key words by '\n' symbol.
+    let key_words: Vec<String> = key_words_string
+        .split("\n")
+        .map(|word| word.to_string())
+        .collect();
+
+    // Get a random index of a word in the list.
+    let rand_ind: usize = rand::thread_rng().gen_range(0..key_words.len());
+
+    // Return the randomly chosen key word.
+    key_words[rand_ind].clone()
+} // end get_random_key_word()
